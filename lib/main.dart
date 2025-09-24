@@ -49,7 +49,7 @@ class _MouseControlScreenState extends State<MouseControlScreen> {
   }
 
   void _connectToServer() async {
-    String ip = 'YOUR_PC_LOCAL_IP'; // Replace with your PC IP
+    String ip = '172.16.28.88';
     int port = 5000;
 
     try {
