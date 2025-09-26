@@ -21,11 +21,7 @@ This makes it possible to **control your computer remotely**, just like using a 
 - **Dart** → programming language used by Flutter  
 - **Material Design** → gives the app its UI look  
 - **Socket programming (Dart `Socket`)** → sends commands from phone to server  
-- **Widgets used**:
-  - `Column`, `Row` → for layout  
-  - `IconButton`, `ElevatedButton` → for mouse controls  
-  - `TextField` → for typing text (keyboard input)  
-  - `PageView` / `Carousel` → for onboarding/help screens  
+
 
 ### 💻 PC Server (Backend Side)
 - **Python 3** → programming language for the server  
