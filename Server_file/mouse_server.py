@@ -8,16 +8,16 @@ TCP_PORT = 5000
 UDP_PORT = 5001
 BUFFER_SIZE = 1024
 
-# === Generate random secret key once per run ===
+
 SECRET_KEY = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
 print(f"[SECURITY] Server secret key: {SECRET_KEY}")
-print(f"[SECURITY] Share this key with authorized clients: {SECRET_KEY}")
+print(f"[SECURITY] Use this code to access the mouse: {SECRET_KEY}")
 
 def handle_client(conn, addr):
     print(f"[SERVER] Connection attempt from {addr}")
 
     try:
-        # === First message must be secret key ===
+       
         client_key = conn.recv(BUFFER_SIZE).decode().strip()
         if client_key != SECRET_KEY:
             print(f"[SECURITY] Invalid key from {addr}. Closing connection.")
@@ -67,7 +67,7 @@ def handle_client(conn, addr):
                 break
 
             elif cmd == "AUTH_OK" or cmd == "AUTH_FAILED":
-                # Ignore authentication responses
+               
                 pass
 
             else:
@@ -115,9 +115,9 @@ if __name__ == "__main__":
     print("=== Smart Mouse & Keyboard Control Server ===")
     print("Starting servers...")
     
-    # Start UDP discovery server
+   
     udp_thread = threading.Thread(target=udp_discovery, daemon=True)
     udp_thread.start()
     
-    # Start TCP server
+    
     tcp_server()
