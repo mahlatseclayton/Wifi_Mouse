@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 void main() {
   runApp(MouseApp());
@@ -10,7 +11,7 @@ class MouseApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Mouse Control App',
+      title: 'Mouse & Keyboard Control App',
       theme: ThemeData(
         primarySwatch: Colors.blue,
         useMaterial3: true,
@@ -40,7 +41,6 @@ class WelcomeScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-
               Container(
                 width: 120,
                 height: 120,
@@ -59,9 +59,8 @@ class WelcomeScreen extends StatelessWidget {
               ),
               SizedBox(height: 30),
 
-
               Text(
-                "Smart Mouse Control",
+                "Smart Mouse & Keyboard Control",
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
@@ -71,9 +70,8 @@ class WelcomeScreen extends StatelessWidget {
               ),
               SizedBox(height: 10),
 
-
               Text(
-                "Control your computer's mouse from your phone",
+                "Control your computer's mouse and keyboard from your phone",
                 style: TextStyle(
                   fontSize: 16,
                   color: Colors.white70,
@@ -82,13 +80,11 @@ class WelcomeScreen extends StatelessWidget {
               ),
               SizedBox(height: 40),
 
-
               Container(
                 height: 280,
                 child: InstructionCarousel(),
               ),
               SizedBox(height: 30),
-
 
               Column(
                 children: [
@@ -159,6 +155,10 @@ class _InstructionCarouselState extends State<InstructionCarousel> {
     {
       "title": "Step 4: Control",
       "description": "Use arrow buttons to move mouse\nTap for small moves, hold for fast movement"
+    },
+    {
+      "title": "Step 5: Keyboard",
+      "description": "Use the keyboard button to type text\nEnter access code when prompted for security"
     },
   ];
 
@@ -324,8 +324,20 @@ class HelpScreen extends StatelessWidget {
                 "2. Install required packages: pip install pyautogui",
                 "3. Run the server script: python server.py",
                 "4. You should see 'Listening on port 5000'",
+                "5. Note the secret key displayed in the console",
               ],
               Icons.settings,
+            ),
+            SizedBox(height: 20),
+            _buildHelpSection(
+              "Keyboard Features",
+              [
+                "• Tap the keyboard icon to open text input",
+                "• Type any text and send it to your computer",
+                "• Use special keys like Enter, Backspace, etc.",
+                "• Access code required for security",
+              ],
+              Icons.keyboard,
             ),
           ],
         ),
@@ -378,8 +390,11 @@ class _MouseControlScreenState extends State<MouseControlScreen> {
   String _status = "Not connected";
   bool _isConnected = false;
   bool _showConnectionDialog = true;
+  bool _showKeyboardDialog = false;
   final TextEditingController _ipController = TextEditingController();
   final TextEditingController _portController = TextEditingController(text: "5000");
+  final TextEditingController _accessCodeController = TextEditingController();
+  final TextEditingController _keyboardController = TextEditingController();
 
   Timer? _holdTimer;
   final int _slowStep = 5;
@@ -391,12 +406,15 @@ class _MouseControlScreenState extends State<MouseControlScreen> {
     _holdTimer?.cancel();
     _ipController.dispose();
     _portController.dispose();
+    _accessCodeController.dispose();
+    _keyboardController.dispose();
     super.dispose();
   }
 
   void _connectToServer() async {
     String ip = _ipController.text.trim();
     String portText = _portController.text.trim();
+    String accessCode = _accessCodeController.text.trim();
 
     if (ip.isEmpty) {
       setState(() {
@@ -408,6 +426,13 @@ class _MouseControlScreenState extends State<MouseControlScreen> {
     if (portText.isEmpty) {
       setState(() {
         _status = "Please enter port number";
+      });
+      return;
+    }
+
+    if (accessCode.isEmpty) {
+      setState(() {
+        _status = "Please enter access code";
       });
       return;
     }
@@ -430,10 +455,29 @@ class _MouseControlScreenState extends State<MouseControlScreen> {
     try {
       _tcpSocket = await Socket.connect(ip, port, timeout: Duration(seconds: 5));
       _tcpSocket!.setOption(SocketOption.tcpNoDelay, true);
-      setState(() {
-        _status = "Connected to $ip:$port";
-        _isConnected = true;
-      });
+
+      // Send access code for authentication
+      _tcpSocket!.write(accessCode + "\n");
+
+      // Wait for authentication response
+      await _tcpSocket!.transform(StreamTransformer.fromHandlers(
+        handleData: (data, sink) {
+          String response = String.fromCharCodes(data).trim();
+          if (response == "AUTH_OK") {
+            setState(() {
+              _status = "Connected to $ip:$port";
+              _isConnected = true;
+            });
+          } else {
+            setState(() {
+              _status = "Authentication failed";
+              _isConnected = false;
+              _showConnectionDialog = true;
+            });
+            _tcpSocket?.close();
+          }
+        },
+      )).first;
 
       _tcpSocket!.listen((data) {}, onDone: () {
         setState(() {
@@ -473,12 +517,34 @@ class _MouseControlScreenState extends State<MouseControlScreen> {
     });
   }
 
+  void _showKeyboard() {
+    setState(() {
+      _showKeyboardDialog = true;
+      _keyboardController.clear();
+    });
+  }
+
   void _sendCommand(String cmd) {
     if (_tcpSocket != null && _isConnected) {
       try {
         _tcpSocket!.write(cmd + "\n");
       } catch (_) {}
     }
+  }
+
+  void _sendText() {
+    String text = _keyboardController.text.trim();
+    if (text.isNotEmpty) {
+      _sendCommand("KEYBOARD $text");
+      setState(() {
+        _showKeyboardDialog = false;
+        _keyboardController.clear();
+      });
+    }
+  }
+
+  void _sendSpecialKey(String key) {
+    _sendCommand("PRESS $key");
   }
 
   void _moveArrow(int dx, int dy) {
@@ -508,13 +574,18 @@ class _MouseControlScreenState extends State<MouseControlScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Smart Mouse Control"),
+        title: Text("Smart Mouse & Keyboard Control"),
         backgroundColor: _isConnected ? Color(0xFF1E88E5) : Color(0xFFD32F2F),
         actions: [
           IconButton(
             icon: Icon(Icons.help_outline),
             onPressed: _showHelp,
           ),
+          if (_isConnected)
+            IconButton(
+              icon: Icon(Icons.keyboard),
+              onPressed: _showKeyboard,
+            ),
           IconButton(
             icon: Icon(_isConnected ? Icons.settings : Icons.wifi),
             onPressed: _showConnectionSetup,
@@ -606,16 +677,18 @@ class _MouseControlScreenState extends State<MouseControlScreen> {
                         ),
                         Expanded(
                           child: GridView.count(
-                            crossAxisCount: 2,
-                            childAspectRatio: 2.0,
+                            crossAxisCount: 3,
+                            childAspectRatio: 1.5,
                             padding: EdgeInsets.symmetric(horizontal: 16),
                             mainAxisSpacing: 8,
                             crossAxisSpacing: 8,
                             children: [
                               _buildActionCard("Left Click", Icons.mouse, Color(0xFF2196F3), () => _sendCommand("LEFT_CLICK")),
                               _buildActionCard("Right Click", Icons.mouse_outlined, Color(0xFFFF9800), () => _sendCommand("RIGHT_CLICK")),
+                              _buildActionCard("Keyboard", Icons.keyboard, Color(0xFF9C27B0), _showKeyboard),
                               _buildActionCard("Scroll Up", Icons.arrow_upward, Color(0xFF4CAF50), () => _sendCommand("SCROLL 120")),
                               _buildActionCard("Scroll Down", Icons.arrow_downward, Color(0xFFF44336), () => _sendCommand("SCROLL -120")),
+                              _buildActionCard("Enter", Icons.keyboard_return, Color(0xFFFF9800), () => _sendSpecialKey("enter")),
                             ],
                           ),
                         ),
@@ -634,8 +707,23 @@ class _MouseControlScreenState extends State<MouseControlScreen> {
                   child: ConnectionDialog(
                     ipController: _ipController,
                     portController: _portController,
+                    accessCodeController: _accessCodeController,
                     onConnect: _connectToServer,
                     onCancel: () => setState(() { _showConnectionDialog = false; }),
+                  ),
+                ),
+              ),
+
+            // Keyboard Dialog
+            if (_showKeyboardDialog && _isConnected)
+              Container(
+                color: Colors.black54,
+                child: Center(
+                  child: KeyboardDialog(
+                    keyboardController: _keyboardController,
+                    onSend: _sendText,
+                    onSpecialKey: _sendSpecialKey,
+                    onCancel: () => setState(() { _showKeyboardDialog = false; }),
                   ),
                 ),
               ),
@@ -665,7 +753,7 @@ class _MouseControlScreenState extends State<MouseControlScreen> {
             ),
           ],
         ),
-        child: Icon(icon, size: 45, color: Color(0xFF2196F3)), // Increased icon size from 30 to 45
+        child: Icon(icon, size: 45, color: Color(0xFF2196F3)),
       ),
     );
   }
@@ -705,12 +793,14 @@ class _MouseControlScreenState extends State<MouseControlScreen> {
 class ConnectionDialog extends StatelessWidget {
   final TextEditingController ipController;
   final TextEditingController portController;
+  final TextEditingController accessCodeController;
   final VoidCallback onConnect;
   final VoidCallback onCancel;
 
   const ConnectionDialog({
     required this.ipController,
     required this.portController,
+    required this.accessCodeController,
     required this.onConnect,
     required this.onCancel,
   });
@@ -750,6 +840,18 @@ class ConnectionDialog extends StatelessWidget {
               ),
               style: TextStyle(color: Colors.white),
             ),
+            SizedBox(height: 16),
+            TextField(
+              controller: accessCodeController,
+              decoration: InputDecoration(
+                labelText: "Access Code",
+                hintText: "Enter server access code",
+                filled: true,
+                fillColor: Color(0xFF0A0E21),
+              ),
+              style: TextStyle(color: Colors.white),
+              obscureText: true,
+            ),
             SizedBox(height: 24),
             Row(
               children: [
@@ -770,6 +872,90 @@ class ConnectionDialog extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class KeyboardDialog extends StatelessWidget {
+  final TextEditingController keyboardController;
+  final VoidCallback onSend;
+  final Function(String) onSpecialKey;
+  final VoidCallback onCancel;
+
+  const KeyboardDialog({
+    required this.keyboardController,
+    required this.onSend,
+    required this.onSpecialKey,
+    required this.onCancel,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Color(0xFF1D1F33),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Padding(
+        padding: EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text("Virtual Keyboard", style: TextStyle(fontSize: 20, color: Colors.white)),
+            SizedBox(height: 16),
+            TextField(
+              controller: keyboardController,
+              maxLines: 3,
+              decoration: InputDecoration(
+                labelText: "Type text to send",
+                filled: true,
+                fillColor: Color(0xFF0A0E21),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              style: TextStyle(color: Colors.white),
+            ),
+            SizedBox(height: 16),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _buildSpecialKeyButton("Enter", Icons.keyboard_return),
+                _buildSpecialKeyButton("Backspace", Icons.backspace),
+                _buildSpecialKeyButton("Space", Icons.space_bar),
+                _buildSpecialKeyButton("Tab", Icons.tab),
+                _buildSpecialKeyButton("Escape", Icons.scale),
+              ],
+            ),
+            SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: onCancel,
+                    child: Text("Cancel", style: TextStyle(color: Colors.white)),
+                  ),
+                ),
+                SizedBox(width: 16),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: onSend,
+                    child: Text("Send Text"),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSpecialKeyButton(String label, IconData icon) {
+    return ElevatedButton.icon(
+      onPressed: () => onSpecialKey(label.toLowerCase()),
+      icon: Icon(icon, size: 16),
+      label: Text(label),
+      style: ElevatedButton.styleFrom(
+        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       ),
     );
   }
