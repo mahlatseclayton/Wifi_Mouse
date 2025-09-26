@@ -72,3 +72,48 @@ This makes it possible to **control your computer remotely**, just like using a 
   ```bash
   pip install pyautogui
 
+
+  ## 📱 Installing the App on Your Phone
+
+You don’t need to build the app yourself — just install the provided `.apk` (Android) or `.ipa` (iOS) file.  
+
+---
+
+### 📲 Android (Install APK)
+1. Download the `.apk` file onto your Android phone.  
+2. Open **Settings → Security → Install unknown apps**.  
+   - Enable installation from your browser or file manager.  
+3. Tap the downloaded `.apk` file.  
+4. Confirm installation → the app will appear on your home screen.  
+
+---
+
+### 🍏 iOS (Install IPA)
+
+You can install the `.ipa` file in two ways:  
+
+#### Option A – Using **Mac + Xcode**  
+1. Connect your iPhone/iPad to your Mac.  
+2. Open **Xcode** → go to **Devices and Simulators** (Window → Devices).  
+3. Drag and drop the `.ipa` file into your device in Xcode.  
+4. Wait for it to finish installing → app will appear on your home screen.  
+
+#### Option B – Using **Windows + Sideloadly**  
+1. Download and install **Sideloadly** → [https://sideloadly.io](https://sideloadly.io)  
+2. Connect your iPhone/iPad to your Windows PC.  
+3. Open **Sideloadly**.  
+   - Select your device.  
+   - Drag and drop the `.ipa` file into Sideloadly.  
+   - Enter your Apple ID (used for signing).  
+   - Click **Start**.  
+4. On your iPhone:  
+   - Go to **Settings → General → VPN & Device Management**.  
+   - Trust the developer profile linked to your Apple ID.  
+5. The app will appear on your home screen 🎉.  
+
+---
+
+⚠️ **Note (iOS users):** If you’re using a **free Apple ID**, the installed app will expire after **7 days**. With a **paid Apple Developer account**, it lasts up to a year.  
+
+
+
