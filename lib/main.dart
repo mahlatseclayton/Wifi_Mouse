@@ -597,7 +597,7 @@ class _MouseControlScreenState extends State<MouseControlScreen> {
           children: [
             Column(
               children: [
-                // Status bar
+
                 Container(
                   padding: EdgeInsets.all(16),
                   color: _isConnected ? Color(0xFF1B5E20) : Color(0xFFB71C1C),
