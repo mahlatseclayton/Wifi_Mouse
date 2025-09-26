@@ -40,7 +40,7 @@ class WelcomeScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // App Icon/Logo
+
               Container(
                 width: 120,
                 height: 120,
@@ -59,7 +59,7 @@ class WelcomeScreen extends StatelessWidget {
               ),
               SizedBox(height: 30),
 
-              // App Title
+
               Text(
                 "Smart Mouse Control",
                 style: TextStyle(
@@ -71,7 +71,7 @@ class WelcomeScreen extends StatelessWidget {
               ),
               SizedBox(height: 10),
 
-              // Subtitle
+
               Text(
                 "Control your computer's mouse from your phone",
                 style: TextStyle(
@@ -82,14 +82,14 @@ class WelcomeScreen extends StatelessWidget {
               ),
               SizedBox(height: 40),
 
-              // Instruction carousel
+
               Container(
                 height: 280,
                 child: InstructionCarousel(),
               ),
               SizedBox(height: 30),
 
-              // Action Buttons
+
               Column(
                 children: [
                   ElevatedButton(
@@ -573,23 +573,23 @@ class _MouseControlScreenState extends State<MouseControlScreen> {
                 if (_isConnected) ...[
                   SizedBox(height: 30),
 
-                  // Arrow controls
+                  // Arrow controls with bigger buttons
                   Expanded(
                     flex: 2,
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         _buildArrowButton(Icons.keyboard_arrow_up, 0, -_slowStep),
-                        SizedBox(height: 10),
+                        SizedBox(height: 20),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             _buildArrowButton(Icons.keyboard_arrow_left, -_slowStep, 0),
-                            SizedBox(width: 60),
+                            SizedBox(width: 80),
                             _buildArrowButton(Icons.keyboard_arrow_right, _slowStep, 0),
                           ],
                         ),
-                        SizedBox(height: 10),
+                        SizedBox(height: 20),
                         _buildArrowButton(Icons.keyboard_arrow_down, 0, _slowStep),
                       ],
                     ),
@@ -652,8 +652,8 @@ class _MouseControlScreenState extends State<MouseControlScreen> {
       onTapUp: (_) => _stopHold(),
       onTapCancel: () => _stopHold(),
       child: Container(
-        width: 60,
-        height: 60,
+        width: 90,
+        height: 90,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           color: Color(0xFF1D1F33),
@@ -665,7 +665,7 @@ class _MouseControlScreenState extends State<MouseControlScreen> {
             ),
           ],
         ),
-        child: Icon(icon, size: 30, color: Color(0xFF2196F3)),
+        child: Icon(icon, size: 45, color: Color(0xFF2196F3)), // Increased icon size from 30 to 45
       ),
     );
   }
